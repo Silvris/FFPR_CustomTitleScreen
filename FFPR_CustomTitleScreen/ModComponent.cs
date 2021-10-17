@@ -17,6 +17,7 @@ namespace FFPR_CustomTitleScreen
         public static ModComponent Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
         private Boolean _isDisabled = false;
+        private bool SceneLoaded = false;
         private String _filePath;
         public ModComponent(IntPtr ptr) : base(ptr)
         {
@@ -80,7 +81,7 @@ namespace FFPR_CustomTitleScreen
                 {
                     return;
                 }
-                if (isScene_CurrentlyLoaded("TitleScreen"))
+                if (isScene_CurrentlyLoaded("TitleScreen") && !SceneLoaded)
                 {
                     GameObject background = GameObject.Find("background_canvas/ui_root/backgrou_root/background");
                     if(background != null)
@@ -88,9 +89,13 @@ namespace FFPR_CustomTitleScreen
                         Image image = background.GetComponent<Image>();
                         Texture2D tex = ReadTextureFromFile(_filePath + "/customTitleScreen.png", "customTitleScreen");
                         image.sprite = Sprite.Create(tex, new Rect(0,0,tex.width,tex.height), new Vector2(), 1f);
-                        _isDisabled = true;
+                        SceneLoaded = true;
                     }
 
+                }
+                if(SceneLoaded && !isScene_CurrentlyLoaded("TitleScreen"))
+                {
+                    SceneLoaded = false;
                 }
             }
             catch (Exception ex)
