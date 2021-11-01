@@ -16,14 +16,17 @@ namespace FFPR_CustomTitleScreen
     {
         public static ModComponent Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
+        public static Configuration Config { get; private set; }
         private Boolean _isDisabled = false;
-        private bool SceneLoaded = false;
+        private bool BackgroundLoaded = false;
+        private bool LogoLoaded = false;
         private String _filePath;
         public ModComponent(IntPtr ptr) : base(ptr)
         {
         }
         public void Awake()
         {
+            Config = new Configuration(EntryPoint.Instance.Config);
             Assembly thisone = Assembly.GetExecutingAssembly();
             _filePath = Path.GetDirectoryName(thisone.Location);
             Log = BepInEx.Logging.Logger.CreateLogSource("FFPR_CustomTitleScreen");
@@ -81,21 +84,44 @@ namespace FFPR_CustomTitleScreen
                 {
                     return;
                 }
-                if (isScene_CurrentlyLoaded("TitleScreen") && !SceneLoaded)
+                if (isScene_CurrentlyLoaded("TitleScreen") && (!BackgroundLoaded || !LogoLoaded))
                 {
-                    GameObject background = GameObject.Find("background_canvas/ui_root/backgrou_root/background");
-                    if(background != null)
+                    if(!BackgroundLoaded && File.Exists(_filePath + "/customTitleScreen.png"))
                     {
-                        Image image = background.GetComponent<Image>();
-                        Texture2D tex = ReadTextureFromFile(_filePath + "/customTitleScreen.png", "customTitleScreen");
-                        image.sprite = Sprite.Create(tex, new Rect(0,0,tex.width,tex.height), new Vector2(), 1f);
-                        SceneLoaded = true;
+                        GameObject background = GameObject.Find("background_canvas/ui_root/backgrou_root/background");
+                        if (background != null)
+                        {
+                            Image image = background.GetComponent<Image>();
+                            Texture2D tex = ReadTextureFromFile(_filePath + "/customTitleScreen.png", "customTitleScreen");
+                            image.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(), 1f);
+                            BackgroundLoaded = true;
+                        }
                     }
-
+                    else
+                    {
+                        Log.LogWarning($"File not found:{_filePath + "/customTitleScreen.png"}");
+                    }
+                    if(!LogoLoaded && File.Exists(_filePath + "/customLogo.png"))
+                    {
+                        GameObject titleLogo = GameObject.Find("menu_canvas/ui_root/notch_root/title(Clone)/content_root/title_image");
+                        if(titleLogo != null)
+                        {
+                            Image image = titleLogo.GetComponent<Image>();
+                            Texture2D tex = ReadTextureFromFile(_filePath + "/customLogo.png", "customLogo");
+                            image.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(), 1f);
+                            LogoLoaded = true;
+                        }
+                    }
+                    else
+                    {
+                        Log.LogWarning($"File not found:{_filePath + "/customLogo.png"}");
+                    }
+                    
                 }
-                if(SceneLoaded && !isScene_CurrentlyLoaded("TitleScreen"))
+                if((BackgroundLoaded || LogoLoaded) && !isScene_CurrentlyLoaded("TitleScreen"))
                 {
-                    SceneLoaded = false;
+                    BackgroundLoaded = false;
+                    LogoLoaded = false;
                 }
             }
             catch (Exception ex)

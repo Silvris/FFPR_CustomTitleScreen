@@ -1,8 +1,10 @@
 ﻿using BepInEx;
 using BepInEx.IL2CPP;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UnhollowerRuntimeLib;
@@ -19,9 +21,12 @@ namespace FFPR_CustomTitleScreen
     [BepInProcess("FINAL FANTASY VI.exe")]
     public class EntryPoint : BasePlugin
     {
+        public static EntryPoint Instance;
         public override void Load()
         {
+
             Log.LogInfo("Loading...");
+            Instance = this;
             ClassInjector.RegisterTypeInIl2Cpp<ModComponent>();
             String name = typeof(ModComponent).FullName;
             Log.LogInfo($"Initializing in-game singleton: {name}");
@@ -34,6 +39,20 @@ namespace FFPR_CustomTitleScreen
             {
                 GameObject.Destroy(singleton);
                 throw new Exception($"The object is missing the required component: {name}");
+            }
+            PatchMethods();
+        }
+        private void PatchMethods()
+        {
+            try
+            {
+                Log.LogInfo("Patching methods...");
+                Harmony harmony = new Harmony("silvris.ffpr.atb_fix");
+                harmony.PatchAll(Assembly.GetExecutingAssembly());
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to patch methods.", ex);
             }
         }
     }
